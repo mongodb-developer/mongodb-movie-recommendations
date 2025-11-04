@@ -10,7 +10,7 @@ let config = {
   productionIP: '0.0.0.0',
   devIP: '127.0.0.1',
   productionPort: 443,
-  devPort: 3000,
+  devPort: 3000
 }
 
 module.exports = config;

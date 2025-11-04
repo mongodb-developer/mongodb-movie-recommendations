@@ -28,6 +28,8 @@ async function postViewing(req, res) {
         new Date(body.viewedAt)
     };
 
+    console.log('Inserting viewing record into viewings collection:', viewingRecord);
+
     let result = await viewingsCollection.insertOne(viewingRecord);
     if (!result.acknowledged) {
       throw new Error('Failed to insert viewing record');
@@ -36,6 +38,8 @@ async function postViewing(req, res) {
     // No point storing the customerId in the viewedMovies array, as that arrray
     // is part of the customer's record
     delete viewingRecord.customerId;
+    delete viewingRecord._id; 
+    console.log('Inserting viewing record into customer viewedMovies:', viewingRecord);
 
     await customerCollection.updateOne(
       { _id: body.customerId },

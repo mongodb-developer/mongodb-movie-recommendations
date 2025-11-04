@@ -5,51 +5,60 @@ const events = db.getCollection('events');
 const customers = db.getCollection('customers');
 const movies = db.getCollection('movies');
 
-// Movies to bootstrap the viewedMovies array for customer1
-let movieIdList = movies.aggregate([
-  { $sample: { size: 50 } },
-  { $project: { _id: 1 } }
-]).toArray();  
+// movies.deleteMany({ fullplot: { $exists: false } });
 
-// Other movies to use for new viewings
-let newMovieIds = movies.aggregate([
-  { $sample: { size: 500 } },
-  { $project: { _id: 1 } }
-]).toArray();
+// movies.updateMany(
+//   { fullplot: { $type: "string" } },
+//   [
+//     { $set: { fullplot: { $concat: ["$fullplot", " "] } } }
+//   ]
+// );
 
-let movieViewingList = [];
+// // Movies to bootstrap the viewedMovies array for customer1
+// let movieIdList = movies.aggregate([
+//   { $sample: { size: 50 } },
+//   { $project: { _id: 1 } }
+// ]).toArray();  
 
-movieIdList.forEach(element => {
-  movieViewingList.push({
-    movieId: element._id,
-    viewedAt: new Date(),
-    completed: Math.random() < 0.7 ? true : false,
-    rating: Math.floor(Math.random() * 3) - 1 // hate | neutral | like
-  });
-});
+// // Other movies to use for new viewings
+// let newMovieIds = movies.aggregate([
+//   { $sample: { size: 500 } },
+//   { $project: { _id: 1 } }
+// ]).toArray();
 
-customer1 = {
-  _id: 'customer1',
-  name: { first: "John", last: "Doe" },
-  email: "john.doe@example.com",
-  viewedMovies: movieViewingList
-}
+// let movieViewingList = [];
 
-customer2 = {
-  _id: 'customer2',
-  name: { first: "Jane", last: "Smith" },
-  email: "jane.smith@example.com"
-}
+// movieIdList.forEach(element => {
+//   movieViewingList.push({
+//     movieId: element._id,
+//     viewedAt: new Date(),
+//     completed: Math.random() < 0.7 ? true : false,
+//     rating: Math.floor(Math.random() * 3) - 1 // hate | neutral | like
+//   });
+// });
 
-// customers.insertMany([customer1, customer2]);
+// customer1 = {
+//   _id: 'customer1',
+//   name: { first: "John", last: "Doe" },
+//   email: "john.doe@example.com",
+//   viewedMovies: movieViewingList
+// }
 
-// Use this to generate the JSON to test the API when adding a new viewing
-let viewing1 = {
-  customerId: 'customer2',
-  movieId: newMovieIds[Math.floor(Math.random() * newMovieIds.length)]._id,
-  viewedAt: new Date(),
-  completed: Math.random() < 0.7 ? true : false,
-  rating: Math.floor(Math.random() * 3) - 1 // hate | neutral | like
-}
+// customer2 = {
+//   _id: 'customer2',
+//   name: { first: "Jane", last: "Smith" },
+//   email: "jane.smith@example.com"
+// }
 
-viewing1;
+// // customers.insertMany([customer1, customer2]);
+
+// // Use this to generate the JSON to test the API when adding a new viewing
+// let viewing1 = {
+//   customerId: 'customer2',
+//   movieId: newMovieIds[Math.floor(Math.random() * newMovieIds.length)]._id,
+//   viewedAt: new Date(),
+//   completed: Math.random() < 0.7 ? true : false,
+//   rating: Math.floor(Math.random() * 3) - 1 // hate | neutral | like
+// }
+
+// viewing1;

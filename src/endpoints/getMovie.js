@@ -1,4 +1,4 @@
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
 const { getDB } = require('../helpers/db');
 const config = require('../config');
 

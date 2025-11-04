@@ -8,27 +8,37 @@ const config = require('./config');
 const { getDB } = require('./helpers/db');
 const getMovie = require('./endpoints/getMovie');
 const postViewing = require('./endpoints/postViewing');
+const getRecommendation = require('./endpoints/getRecommendation');
 const { exit } = require('process');
+const { get } = require('http');
 
 const app = express();
 const ip = config.localDev ? config.devIP : config.productionIP;
 const port = config.localDev ? config.devPort : config.productionPort;
 const mongoDBURI = process.env.MONGODB_URI;
 const secret = process.env.SECRET;
+const voyageAPIKey = process.env.VOYAGE_API_KEY;
 
 if (mongoDBURI) {
   config.mongoDBURI = mongoDBURI;
 } else {
-  console.error('MONGODB_URI not set in environment variables, using config value');
+  console.error('MONGODB_URI not set in environment variables');
   exit(1)
 };
 
 if (secret) {
   config.secret = secret;
 } else {
-  console.error('SECRET not set in environment variables, using config value');
+  console.error('SECRET not set in environment variables');
   exit(1)
 };
+
+if (voyageAPIKey) {
+  config.voyageAPIKey = voyageAPIKey;
+} else {
+  console.error('VOYAGE_API_KEY not set in environment variables');
+  exit(1)
+}
 
 console.log(`Using MongoDB URI: ${config.mongoDBURI} to connect to database: ${config.database}`);
 
@@ -61,6 +71,7 @@ async function start() {
     // Routes
     app.get('/movie', getMovie);
     app.post('/viewing', postViewing);
+    app.get('/recommendation', getRecommendation);
 
     app.get('/', (request, response) => {
       const status = {
