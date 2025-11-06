@@ -20,7 +20,7 @@ async function getRecommendation(req, res) {
         const customerCollection = db.collection(config.customerCollection);
 
         // Single aggregation on customers to return both viewed movieIds and favourite movie info
-        const pipeline = [
+        let pipeline = [
           { $match: { _id: customerId } },
           { $project: { viewedMovies: 1 } },
           {
@@ -57,7 +57,11 @@ async function getRecommendation(req, res) {
                 },
                 { $set: { movie: { $first: '$movie' } } },
                 { $replaceRoot: { newRoot: '$movie' } },
-                { $project: { _id: 1, title: 1, fullplot_embedding: 1 } }
+                { $project: { 
+                  _id: 1,
+                  title: 1, 
+                  fullplot: 1,
+                  fullplot_embedding: 1 } }
               ]
             }
           },
@@ -79,8 +83,39 @@ async function getRecommendation(req, res) {
         const { viewedMovieIds = [], favouriteMovie = null } = aggResult;
         console.log('Viewed movie IDs:', viewedMovieIds);
         console.log('Favourite movie aggregation result:', favouriteMovie);
-        res.status(200).json({ viewedMovieIds, favouriteMovie });
-        // res.status(200).json({billy: 'fish'});
+
+        const moviesCollection = db.collection(config.moviesCollection);
+        
+        const vectorSearchPipeline = [
+          {
+            $vectorSearch: {
+              filter: { 
+                _id: { $nin: viewedMovieIds },
+                type: 'movie'
+              },
+              index: config.moviesVectorIndex,
+              limit: 5,
+              numCandidates: 100,
+              path: 'fullplot_embedding',
+              queryVector: favouriteMovie.fullplot_embedding
+            }
+          },
+          {
+            $project: {
+              score: { $meta: 'vectorSearchScore' },
+              title: 1,
+              fullplot: 1,
+            }
+          }
+        ]
+
+        const searchResults = await moviesCollection.aggregate(vectorSearchPipeline).toArray();
+        console.log('Search results:', searchResults);
+
+        res.status(200).json({ searchResults });
+
+        // TODO: Use reranker
+
       } catch (error) {
         console.error('Error fetching recommendation:', error);
         res.status(500).json({ message: 'Internal Server Error', error: error.message });
