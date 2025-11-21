@@ -1,0 +1,34 @@
+{
+	"info": {
+		"_postman_id": "cf670599-a47a-402b-ba8d-4df502d09fc3",
+		"name": "Movies-local",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "399047"
+	},
+	"item": [
+		{
+			"name": "getMovie",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "postViewing",
+			"request": {
+				"method": "POST",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "getRecommendation",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}
