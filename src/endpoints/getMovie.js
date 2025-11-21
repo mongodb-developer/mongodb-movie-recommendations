@@ -3,6 +3,8 @@ import { getDB } from '../helpers/db.js';
 import config from '../config.js';
 
 async function getMovie(req, res) {
+  // Use the movie ID from the query parameters to fetch movie details from 
+  // the database
   const movieId = req.query.id;
   const secret = req.query.secret;
   if (!secret || config.secret !== secret) {

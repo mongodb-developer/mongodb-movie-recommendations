@@ -14,7 +14,8 @@ async function getRecommendation(req, res) {
         const db = await getDB();
         const customerCollection = db.collection(config.customerCollection);
 
-        // Single aggregation on customers to return both viewed movieIds and favourite movie info
+        // Single aggregation on customers to return both viewed movieIds and 
+        // favourite movie info
         const favouritesPipeline = [
           { $match: { _id: customerId } },
           { $project: { viewedMovies: 1 } },
@@ -83,17 +84,21 @@ async function getRecommendation(req, res) {
         const moviesCollection = db.collection(config.moviesCollection);
 
         // If we've already cached the most similar movie in the last X days,
-        // then use that
+        // then use that. This can reduce costs by reducing how often we need to do
+        // a vector search.
 
-        if (favouriteMovie && favouriteMovie.mostSimilar && 
-          favouriteMovie.mostSimilar.id && favouriteMovie.mostSimilar.lastUpdated &&
-          favouriteMovie.mostSimilar.lastUpdated > Date.now() - config.recommendationTimeoutDays * 24 * 60 * 60 * 1000
+        if (favouriteMovie?.mostSimilar?.id && 
+          favouriteMovie.mostSimilar.lastUpdated > 
+            Date.now() - config.recommendationTimeoutDays * 24 * 60 * 60 * 1000
         ) {
           console.log('Using cached most similar movie for recommendation.');
-          const recommendedMovie = await moviesCollection.findOne({ _id: favouriteMovie.mostSimilar.id });
+          const recommendedMovie = await moviesCollection.findOne(
+            { _id: favouriteMovie.mostSimilar.id });
           if (recommendedMovie) {
             return res.status(200).json({ 
-              favourite: { ...favouriteMovie, fullplot_embedding: undefined },
+              favourite: { ...favouriteMovie, 
+                // Hide embedding in response, as it is large, and provides no value to the caller
+                fullplot_embedding: undefined },  
               recommendation: recommendedMovie 
             });
           } else {
@@ -122,8 +127,9 @@ async function getRecommendation(req, res) {
               fullplot: 1,
             }
           },
+          // Filter out low-score results to avoid poor recommendations
           {
-            $match: { score: { $gt: 0.8 }}
+            $match: { score: { $gt: config.recommendationThreshold }}
           }
         ]
 
@@ -137,6 +143,8 @@ async function getRecommendation(req, res) {
 
         const voyageClient = getVoyageClient();
 
+        // Rerank the results using Voyage AI's reranking model, which may provide better
+        // relevance ordering than just vector similarity alone
         const rerankResponse = await voyageClient.rerank({
           model: 'rerank-2',
           query: favouriteMovie.fullplot,

@@ -3,6 +3,15 @@ import { getDB } from '../helpers/db.js';
 import { ObjectId } from 'mongodb';
 
 async function postViewing(req, res) {
+  // The body of the request contains the viewing data to be recorded and the 
+  // customer ID to store the data against:
+  // {
+  //   "customerId": "customer1",
+  //   "movieId": "573a13c6f29313caabd73051",
+  //   "viewedAt": "2025-11-04T13:45:26.768Z",
+  //   "completed": true,
+  //   "rating": -1
+  // }
   const body = req.body;
   if (req.query.secret !== config.secret) {
     return res.status(403).json({ message: 'Forbidden: Invalid secret' });
@@ -44,6 +53,7 @@ async function postViewing(req, res) {
     await customerCollection.updateOne(
       { _id: body.customerId },
       { 
+        // Add the new viewing to the start of the array, keeping only the most recent 50
         $push: { viewedMovies: { $each: [viewingRecord], $position: 0, $slice: 50 } }
       }
     );

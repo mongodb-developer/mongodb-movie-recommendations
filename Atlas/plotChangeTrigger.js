@@ -1,6 +1,6 @@
 /**
  * Atlas Trigger: Generate Voyage AI embeddings for `movies` collection.
- * Fires on insert or update of documents.
+ * Fires on insert, replace or update of documents.
  * Expects a text field, defined below, to create embeddings for.
  * Writes the updated embeddings to the same document.
  */
