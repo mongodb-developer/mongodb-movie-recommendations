@@ -88,3 +88,99 @@ db.movies.updateMany(
 ```
 
 This update will complete quickly, but the triggers run sequentially and so it will take some time for `fullplot_embedding` to be set in all of the movie documents.
+
+### Create the MongoDB Atlas vector search index
+
+**TBD**
+
+## Running the application endpoints
+### Environent variables
+The application expects three environment variables to be set:
+- `MONGODB_URI`. The connection string for your MongoDB Atlas cluster (including the database username and password). The IP address of the server where the endpoints will be running need to be included in the cluster's [IP Access List](https://www.mongodb.com/docs/atlas/security/ip-access-list/).
+- `VOYAGE_API_KEY`. This can be the same as used for the MongoDB Atlas trigger.
+- `SECRET`. This can be any value, it will be used by any application using the endpoints.
+
+### Configuring the application
+[src/config.js](src/config.js) contains all of the settings that can be customised before starting the app (database and collection names, port numbers, development mode, etc.)
+
+### Starting the Express server
+```bash
+npm install
+npm start
+```
+
+## Testing the endpoints
+[Postman/Movies-local.postman_collection.json](Postman/Movies-local.postman_collection.json) contains a [Postman](https://www.postman.com/) collection that can be imported into Postman to test each of the endpoints.
+
+## Key pieces of code
+### Connecting the endpoints to MongoDB
+Resources are consumed whenever opening a new connection to MongoDB, and so it's wasteful to do so on every invocation of an endpoint. Instead, the application does so once when the application starts (and again if/when the connection is lost). This is performed by the `getDB` function in [src/helpers/db.js](src/helpers/db.js). 
+
+`getDB` connects to MongoDB if there isn't already a connection, but returns the existing database connection if it exists.
+
+`getDB` is invoked when the application starts, and then whenever an endpoint is called.
+
+### Connecting to Voyage AI
+The `getVoyageClient` funtion implemented in [src/helpers/voyageai.js](src/helpers/voyageai.js) returns a client connection to the Voyage AI API.
+
+### `POST viewing` endpoint
+This is implemented in [src/endpoints/postViewing.js](src/endpoints/postViewing.js) and should be used whenever a customer watches a new movie.
+
+The endpoint adds a new object to the customer's document `viewedMovies` array representing the moview viewing. The object contains the `_id` of the new movie, together with a flag to indicate if the customer watched the movie to the end, when they watched it, and a rating (-1 === disliked, 1 === liked, 0 === didn't express a view).
+
+```js
+{
+  _id: 'customer1',
+  name: { first: 'John', last: 'Doe' },
+  email: 'john.doe@example.com',
+  viewedMovies: [
+    {
+      movieId: ObjectId('573a139af29313caabcef29d'),
+      viewedAt: 2025-12-02T14:25:20.580Z,
+      completed: true,
+      rating: -1
+    },
+    {
+      movieId: ObjectId('573a139af29313caabcf0324'),
+      viewedAt: 2025-12-02T14:25:20.580Z,
+      completed: true,
+      rating: 1
+    },
+    {
+      movieId: ObjectId('573a13e3f29313caabdbfc11'),
+      viewedAt: 2025-12-02T14:25:20.580Z,
+      completed: true,
+      rating: -1
+    },
+    {
+      movieId: ObjectId('573a13a0f29313caabd05069'),
+      viewedAt: 2025-12-02T14:25:20.580Z,
+      completed: true,
+      rating: 0
+    },
+    {
+      movieId: ObjectId('573a13b8f29313caabd4cdc1'),
+      viewedAt: 2025-12-02T14:25:20.580Z,
+      completed: false,
+      rating: 1
+    },
+    ...
+}
+```
+
+We only want to maintain the most recent fifty movies for each customer. This is acheived using this code:
+
+```js
+await customerCollection.updateOne(
+  { _id: body.customerId },
+  { 
+    // Add the new viewing to the start of the array, keeping only the most recent 50
+    $push: { viewedMovies: { $each: [viewingRecord], $position: 0, $slice: 50 } }
+  }
+);
+```
+
+This single call to MongoDB atomically:
+- Finds the customer document for the provided `customerId`
+- Adds the new viewing as the first element in the `viewedMovies` array in that document
+- Removes any elements in the array after the fiftieth element (counted *after* the new element has been added)

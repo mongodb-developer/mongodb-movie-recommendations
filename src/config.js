@@ -3,7 +3,7 @@ let config = {
   keyfileLocation: '/home/ec2-user/certs/privkey.pem', // Ignored in localDev mode
   certfileLocation: '/home/ec2-user/certs/fullchain.pem', // Ignored in localDev mode
   productionClientURL: 'https://myproductionclient.com', // Ignored in localDev mode
-  database: 'movie_recommendations',
+  database: 'sample_mflix',
   moviesCollection: 'movies',
   customerCollection: 'customers',
   viewingsCollection: 'viewings',

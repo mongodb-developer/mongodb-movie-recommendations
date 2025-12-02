@@ -10,7 +10,18 @@
 			"name": "getMovie",
 			"request": {
 				"method": "GET",
-				"header": []
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/movie?id=573a13c6f29313caabd73051&secret=secret123",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "3000",
+					"path": ["movie"],
+					"query": [
+						{ "key": "id", "value": "573a13c6f29313caabd73051" },
+						{ "key": "secret", "value": "secret123" }
+					]
+				}
 			},
 			"response": []
 		},
@@ -18,7 +29,33 @@
 			"name": "postViewing",
 			"request": {
 				"method": "POST",
-				"header": []
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3000/viewing?secret={{secret}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"viewing"
+					],
+					"query": [
+						{
+							"key": "secret",
+							"value": "secret123"
+						}
+					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"customerId\": \"customer1\",\n  \"movieId\": \"573a13c6f29313caabd73051\",\n  \"viewedAt\": \"2025-11-04T13:45:26.768Z\",\n  \"completed\": true,\n  \"rating\": -1\n}"
+				}
 			},
 			"response": []
 		},
@@ -26,7 +63,18 @@
 			"name": "getRecommendation",
 			"request": {
 				"method": "GET",
-				"header": []
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/recommendation?customerId=customer1&secret=secret123",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "3000",
+					"path": ["recommendation"],
+					"query": [
+						{ "key": "customerId", "value": "customer1" },
+						{ "key": "secret", "value": "secret123" }
+					]
+				}
 			},
 			"response": []
 		}
