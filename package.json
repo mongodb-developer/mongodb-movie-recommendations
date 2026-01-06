@@ -5,8 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js",
-    "build": "echo \"Building the app...\""
+    "start": "node src/index.js"
   },
   "author": "Andrew Morgan",
   "description": "Backend API for the MongoDB movie recommendation app",
