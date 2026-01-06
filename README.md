@@ -91,7 +91,35 @@ This update will complete quickly, but the triggers run sequentially and so it w
 
 ### Create the MongoDB Atlas vector search index
 
-**TBD**
+From the `mongosh` shell, create the vector search index:
+
+```js
+use sample_mflix
+
+db.movies.createSearchIndex(
+  'movie-recommendation2', 
+  'vectorSearch',
+  {
+    "fields": [
+      {
+        "type": "vector",
+        "path": "fullplot_embedding",
+        "numDimensions": 1024,
+        "similarity": "cosine",
+        "quantization": "scalar"
+      },
+      {
+        "type": "filter",
+        "path": "_id"
+      },
+      {
+        "type": "filter",
+        "path": "type"
+      }
+    ]
+  }
+)
+```
 
 ## Running the application endpoints
 ### Environent variables

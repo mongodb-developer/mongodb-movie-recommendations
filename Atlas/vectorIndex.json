@@ -13,10 +13,6 @@
     },
     {
       "type": "filter",
-      "path": "genres"
-    },
-    {
-      "type": "filter",
       "path": "type"
     }
   ]

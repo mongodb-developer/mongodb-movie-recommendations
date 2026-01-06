@@ -81,20 +81,42 @@ async function getRecommendation(req, res) {
         console.log('Viewed movie IDs:', viewedMovieIds);
         console.log('Favourite movie aggregation result:', favouriteMovie);
 
+        if (viewedMovieIds.length === 0) {
+          console.error(`Customer ID ${customerId} has no viewed movies.`);
+          return res.status(404).json({ message: `No viewed movies for customer ${customerId}` });
+        }
+
+        if (!favouriteMovie || !favouriteMovie.fullplot_embedding) {
+          console.error(`No favourite movie with embedding found for customer ID ${customerId}.`);
+          return res.status(404).json({ message: 'No favourite movie with embedding found' });
+        }
+
         const moviesCollection = db.collection(config.moviesCollection);
 
         // If we've already cached the most similar movie in the last X days,
         // then use that. This can reduce costs by reducing how often we need to do
         // a vector search.
-
-        if (favouriteMovie?.mostSimilar?.id && 
-          favouriteMovie.mostSimilar.lastUpdated > 
+        if (config.cacheSimilarMovies && favouriteMovie?.mostSimilar?.ids?.length > 0 && 
+          favouriteMovie?.mostSimilar?.lastUpdated > 
             Date.now() - config.recommendationTimeoutDays * 24 * 60 * 60 * 1000
         ) {
           console.log('Using cached most similar movie for recommendation.');
+          // Fetch the first cached most similar movie that the customer hasn't already viewed
+          const mostSimilarUnviewedMovieId = favouriteMovie.mostSimilar.ids.find(
+            id => !viewedMovieIds.includes(id)
+          );
+          if (!mostSimilarUnviewedMovieId) {
+            console.log('All cached similar movies have already been viewed by the customer.');
+            return res.status(404).json({ message: 'No recommendation found' });
+          }
+
           const recommendedMovie = await moviesCollection.findOne(
-            { _id: favouriteMovie.mostSimilar.id });
+            { _id: mostSimilarUnviewedMovieId },
+            // Exclude embedding from returned document to reduce response size
+            // (and it provides no value to the caller)
+            { projection: { fullplot_embedding: 0 } });
           if (recommendedMovie) {
+            console.log(`Returning cached most similar movie "${recommendedMovie.title}" as recommendation.`);
             return res.status(200).json({ 
               favourite: { ...favouriteMovie, 
                 // Hide embedding in response, as it is large, and provides no value to the caller
@@ -106,26 +128,35 @@ async function getRecommendation(req, res) {
           }
         }
         
+        const filter = config.cacheSimilarMovies ? {
+          // If the results are going to be used by other customers fort this
+          // favourite movie, then we just need to exclude the favourite movie
+          // itself
+          _id: { $ne: favouriteMovie._id },
+          type: 'movie'
+        } : {
+          // If the results aren't being used by other customers, then we can
+          // exclude all previously viewed movies for this customer
+          _id: { $nin: viewedMovieIds },
+          type: 'movie'
+        };
+
         const vectorSearchPipeline = [
           {
             $vectorSearch: {
-              filter: { 
-                _id: { $nin: viewedMovieIds },
-                type: 'movie'
-              },
+              filter,
               index: config.moviesVectorIndex,
-              limit: 5,
+              limit: 10,
               numCandidates: 100,
               path: 'fullplot_embedding',
               queryVector: favouriteMovie.fullplot_embedding
             }
           },
           {
-            $project: {
-              score: { $meta: 'vectorSearchScore' },
-              title: 1,
-              fullplot: 1,
-            }
+            $set: { score: { $meta: 'vectorSearchScore' } }
+          },
+          {
+            $unset: ['fullplot_embedding']
           },
           // Filter out low-score results to avoid poor recommendations
           {
@@ -133,7 +164,10 @@ async function getRecommendation(req, res) {
           }
         ]
 
-        const searchResults = await moviesCollection.aggregate(vectorSearchPipeline).toArray();
+        let searchResults = await moviesCollection.aggregate(vectorSearchPipeline).toArray();
+        // Remove favourite movie from results if present
+        // searchResults = searchResults.filter(movie => movie._id.toString() !== favouriteMovie._id.toString());
+
         if (searchResults.length === 0) {
           console.log('No suitable recommendation found based on favourite movie.');
           return res.status(404).json({ message: 'No recommendation found' });
@@ -166,20 +200,42 @@ async function getRecommendation(req, res) {
         // }
 
         console.log('Rerank results:', rerankResponse);
-        const topRecommendation = searchResults[rerankResponse.data[0].index];
-        console.log('Top recommendation after reranking:', topRecommendation);
 
-        // Update the favourite movie's mostSimilar field with the new recommendation
-        await moviesCollection.updateOne(
-          { _id: favouriteMovie._id },
-          { $set: { 
-            mostSimilar: { 
-              id: topRecommendation._id, 
-              lastUpdated: new Date() 
-            } 
-          } }
-        );
-        console.log(`Updated favourite movie mostSimilar field in database for "${favouriteMovie.title}".`);
+        const topRecommendations = rerankResponse.data.map(item => searchResults[item.index]);
+        let topRecommendation = null;
+        if (config.cacheSimilarMovies) {
+          const similarMovieIds = topRecommendations.map(rec => rec._id);
+          console.log('Top recommendation IDs to cache:', similarMovieIds);
+          console.log('Caching most similar movie as per configuration.');
+          topRecommendation = searchResults[rerankResponse.data[0].index];
+          await moviesCollection.updateOne(
+            { _id: favouriteMovie._id },
+            { $set: { 
+              mostSimilar: { 
+                ids: similarMovieIds, 
+                lastUpdated: new Date() 
+              } 
+            } }
+          );
+          console.log(`Updated favourite movie mostSimilar field in database for "${favouriteMovie.title}".`);
+
+          // set topRecommendation to the firest element in the reranked list that
+          // the customer hasn't already viewed
+          for (const rec of topRecommendations) {
+            if (!viewedMovieIds.includes(rec._id)) {
+              topRecommendation = rec;
+              break;
+            }
+          }
+          if (!topRecommendation) {
+            console.log('All top recommendations have already been viewed by the customer.');
+            return res.status(404).json({ message: 'No recommendation found' });
+          }
+        } else {
+          topRecommendation = searchResults[rerankResponse.data[0].index];
+        }
+
+        console.log('Top recommendation after reranking:', topRecommendation);
 
         res.status(200).json({ 
           favourite: { ...favouriteMovie, fullplot_embedding: undefined },

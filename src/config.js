@@ -12,6 +12,8 @@ let config = {
                                 // previous vector search to find most similar movie
   recommendationThreshold: 0.8, // Minimum similarity score for recommendations,
                                 // any lower score will be ignored. Avoids poor recommendations.
+  cacheSimilarMovies: true, // Whether to cache most similar movie in movie document, reduces 
+                            // vector search costs at the expense of storage and potential staleness
   productionIP: '0.0.0.0', // Ignored in localDev mode
   devIP: '127.0.0.1',
   productionPort: 443, // Ignored in localDev mode
