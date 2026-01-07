@@ -16,18 +16,18 @@ The application provides these 3 endpoints (no front-end code is included, but t
 }
 ```
 
-- `GET recommendation`. Provide query parameters for `customerId` (matches `_id` in the `customers` collection) and `secret` (must match the value set in the backend). Returns the details a movie that's similar to one the customer watched recently and enjoyed.
+- `GET recommendation`. Provide query parameters for `customerId` (matches `_id` in the `customers` collection) and `secret` (must match the value set in the backend). Returns the details of a movie that's similar to one the customer watched recently and enjoyed.
 
-## Prerequistes
+## Prerequisites
 - A MongoDB Atlas cluster [you can spin up a free MongoDB Atlas cluster following these instructions](https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/)
 - A [(free) Voyage API key](https://www.voyageai.com/)
 
 ## Preparing your database
-The application works from the data in the [`movies` collection of the `sample_mflix` database that you automatically create in MongoDB Atlas](https://www.mongodb.com/docs/atlas/sample-data/sample-mflix/).
+The application works from the data in the [`movies` collection of the `sample_mflix` database that you can automatically create in MongoDB Atlas](https://www.mongodb.com/docs/atlas/sample-data/sample-mflix/).
 
-The `movies` collection contains the embedding data for the `plot` field for each collection, this application works instead with the `fullplot` data, and so we need to generate those embeddings and store them in the movie documents.
+The `movies` collection contains a document for each movie. These documents contain a `fullplot` field, and it's this data that we'll use to find similar movies. We'll generate an embedding (vector) from the `fullplot` field and then include it as a new field in the original `movies` documents.
 
-The application automates the maintenance and creation on a new field in the `movies` collection named `fullplot_embedding` using an [Atlas Trigger](https://www.mongodb.com/docs/atlas/atlas-ui/triggers/). Whenever a document is inserted/replaced, or the `fullplot` fields is updated, the trigger calls the Voyage AI API to generate a new vector/embedding from the new string, and stores in in the `fullplot_embedding` field.
+The application automates the maintenance and creation of a new field in the `movies` collection named `fullplot_embedding` using an [Atlas Trigger](https://www.mongodb.com/docs/atlas/atlas-ui/triggers/). Whenever a document is inserted/replaced, or the `fullplot` field is updated, the trigger calls the Voyage AI API to generate a new vector/embedding from the new string, and stores it in the `fullplot_embedding` field.
 
 ### Setting up the MongoDB Atlas trigger
 Start configuring the [MongoDB Atlas trigger](https://www.mongodb.com/docs/atlas/atlas-ui/triggers/) as shown here:
@@ -40,7 +40,7 @@ Continue configuring the trigger:
 
 ![Atlas UI showing Auto-Resume toggle turned on, Event Ordering to on, and Skip Events On Re-Enable to off](public/images/configure_trigger_2.png)
 
-Note that `Event Ordering` is enabled, this ensures that we don't exceed the Voyage AI free-tier rate limit when making a bulk change to `movies` collection.
+Note that `Event Ordering` is enabled, preventing lots of trigger invocations running in parallel.  This ensures that we don't exceed the Voyage AI free-tier rate limit when making a bulk change to `movies` collection.
 
 Set the `Event Type` to `Function` and paste in the code from [Atlas/plotChangeTrigger.js](Atlas/plotChangeTrigger.js):
 
@@ -54,13 +54,13 @@ Optionally, name the trigger, and then `Save` it.
 
 #### Define the `VOYAGE-API-KEY` Atlas secret
 
-Return to the Triggers overiew and select the "Linked App Service" link:
+Return to the Triggers overview and select the "Linked App Service" link:
 
 ![Atlas UI with a link to the "triggers" app](public/images/configure_trigger_5.png)
 
 Select `Values` from the App Services menu and then click on "Create New Value". 
 
-Select `SECRET`, set the name to `VOYAGE-API-KEY`, and the value to the key that you got from the [(Voyage AI site](https://www.voyageai.com/) as part of the prerequistes:
+Select `SECRET`, set the name to `VOYAGE-API-KEY`, and the value to the key that you got from the [Voyage AI site](https://www.voyageai.com/) as part of the prerequisites:
 
 ![Atlas UI configuring a secret named VOYAGE-API-KEY](public/images/configure_trigger_6.png)
 
@@ -74,7 +74,7 @@ Return to the trigger definition and enable the trigger:
 
 ### Adding the embeddings
 
-The trigger is now active, and so we can update `fullplot` in all of the `movies` documents, and then the trigger will aysnchronously request the embedding from Voyage AI, and store it in the movie document as a new field named `fullplot_embedding`:
+The trigger is now active, and so we can update `fullplot` in all of the `movies` documents, and then the trigger will asynchronously request the embedding from Voyage AI, and store it in the movie document as a new field named `fullplot_embedding`:
 
 ```js
 use sample_mflix
@@ -91,35 +91,42 @@ This update will complete quickly, but the triggers run sequentially and so it w
 
 ### Create the MongoDB Atlas vector search index
 
-From the `mongosh` shell, create the vector search index:
+From the `mongosh` shell, create the vector search index using [`createSearchIndex`](https://www.mongodb.com/docs/manual/reference/method/db.collection.createSearchIndex/):
 
 ```js
 use sample_mflix
 
 db.movies.createSearchIndex(
-  'movie-recommendation2', 
-  'vectorSearch',
+  'movie-recommendation', // Name of the index
+  'vectorSearch',         // It's a vector search index
   {
     "fields": [
       {
         "type": "vector",
-        "path": "fullplot_embedding",
-        "numDimensions": 1024,
-        "similarity": "cosine",
-        "quantization": "scalar"
+        "path": "fullplot_embedding",  // Name of field containing the embedding
+        "numDimensions": 1024,  // Number of elements in the vector (dictated
+                                // by the embedding model used)
+        "similarity": "cosine", // Algorithm to use to determine closeness of
+                                // vectors
+        "quantization": "scalar"  // Reduce the size of the vector index by converting
+                                  // the floating point vector dimensions into
+                                  // integers
       },
       {
-        "type": "filter",
+        "type": "filter",   // Enable pre-filtering on the _id field
         "path": "_id"
       },
       {
-        "type": "filter",
+        "type": "filter",  // Enable pre-filtering on the type field
         "path": "type"
       }
     ]
   }
 )
 ```
+
+This index can now be used to perform a vector search on the `fullplot_embedding`, as well as [pre-filtering](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/?interface=driver&language=nodejs#std-label-vectorSearch-agg-pipeline-filter) the results on the `_id` and `type` fields.
+
 
 ## Running the application endpoints
 ### Environent variables

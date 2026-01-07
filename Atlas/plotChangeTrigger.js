@@ -20,16 +20,12 @@ exports = async function(changeEvent) {
   // 1️⃣ Only continue if the description field changed (or document inserted)
   if (changeEvent.operationType === "update") {
     updatedFields = changeEvent.updateDescription?.updatedFields || {};
-    //console.log("Updated field text:", JSON.stringify(updatedFields?.[TEXT_FIELD]));
-    //console.log("The _id for the changed document is ", docID);
     if (!(TEXT_FIELD in updatedFields)) {
       console.log(`'${TEXT_FIELD}' not modified — skipping embedding update.`);
       return;
     }
   } else if (changeEvent.operationType === "insert" || changeEvent.operationType === "replace") {
     updatedFields = changeEvent.fullDocument || {};
-    //console.log("Inserted document text:", JSON.stringify(updatedFields?.[TEXT_FIELD]));
-    //console.log("The _id for the inserted document is ", docID);
   } else {
     console.log(`Unsupported operationType '${changeEvent.operationType}' — skipping embedding update.`);
     return;
@@ -88,7 +84,6 @@ exports = async function(changeEvent) {
   // 4️⃣ Check for race condition (stale description)
   const db = context.services.get(CLUSTER_NAME).db(changeEvent.ns.db);
   const coll = db.collection(COLLECTION_NAME);
-  //console.log(`Fetched embedding of length ${embedding.length} from Voyage AI.`);
   const currentDoc = await coll.findOne({ _id: docID }, { [TEXT_FIELD] : 1 } );
   
   console.log("Current document text field:", JSON.stringify(currentDoc));
