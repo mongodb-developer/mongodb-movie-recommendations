@@ -129,7 +129,7 @@ async function getRecommendation(req, res) {
         }
         
         const filter = config.cacheSimilarMovies ? {
-          // If the results are going to be used by other customers fort this
+          // If the results are going to be used by other customers for this
           // favourite movie, then we just need to exclude the favourite movie
           // itself
           _id: { $ne: favouriteMovie._id },
