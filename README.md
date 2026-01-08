@@ -129,7 +129,7 @@ This index can now be used to perform a vector search on the `fullplot_embedding
 
 
 ## Running the application endpoints
-### Environent variables
+### Environment variables
 The application expects three environment variables to be set:
 - `MONGODB_URI`. The connection string for your MongoDB Atlas cluster (including the database username and password). The IP address of the server where the endpoints will be running need to be included in the cluster's [IP Access List](https://www.mongodb.com/docs/atlas/security/ip-access-list/).
 - `VOYAGE_API_KEY`. This can be the same as used for the MongoDB Atlas trigger.
@@ -161,7 +161,7 @@ The `getVoyageClient` funtion implemented in [src/helpers/voyageai.js](src/helpe
 ### `POST viewing` endpoint
 This is implemented in [src/endpoints/postViewing.js](src/endpoints/postViewing.js) and should be used whenever a customer watches a new movie.
 
-The endpoint adds a new object to the customer's document `viewedMovies` array representing the moview viewing. The object contains the `_id` of the new movie, together with a flag to indicate if the customer watched the movie to the end, when they watched it, and a rating (-1 === disliked, 1 === liked, 0 === didn't express a view).
+The endpoint adds a new object to the customer's document `viewedMovies` array representing the movie viewing. The object contains the `_id` of the new movie, together with a flag to indicate if the customer watched the movie to the end, when they watched it, and a rating (-1 === disliked, 1 === liked, 0 === didn't express a view).
 
 ```js
 {
@@ -203,7 +203,7 @@ The endpoint adds a new object to the customer's document `viewedMovies` array r
 }
 ```
 
-We only want to maintain the most recent fifty movies for each customer. This is acheived using this code:
+We only want to maintain the most recent fifty movies for each customer. This is achieved using this code:
 
 ```js
 await customerCollection.updateOne(
