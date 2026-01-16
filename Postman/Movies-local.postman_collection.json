@@ -77,6 +77,40 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "findMovieByPlot",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3000/find-by-plot?secret=secret123",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"find-by-plot"
+					],
+					"query": [
+						{
+							"key": "secret",
+							"value": "secret123"
+						}
+					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"plot\": \"A young farm boy discovers he has special powers and joins a rebellion to fight an evil empire in space.\"\n}"
+				}
+			},
+			"response": []
 		}
 	]
 }

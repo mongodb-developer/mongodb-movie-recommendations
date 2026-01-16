@@ -2,7 +2,7 @@
 The purpose of the code in this repo is to demonstrate how to build a recommendation engine using Voyage AI and MongoDB Atlas.
 
 ## Endpoints
-The application provides these 3 endpoints (no front-end code is included, but there's a Postman collection that can be used for testing):
+The application provides these 4 endpoints (no front-end code is included, but there's a Postman collection that can be used for testing):
 - `GET movie`. Provide query parameters for `id` (`_id` of the document in the `movies` collection) and for `secret` (must match the value set in the backend). Returns the movie details.
 - `POST viewing`. Provide query parameter for `secret` (must match the value set in the backend). Body contains details of the viewing being added:
 
@@ -17,6 +17,15 @@ The application provides these 3 endpoints (no front-end code is included, but t
 ```
 
 - `GET recommendation`. Provide query parameters for `customerId` (matches `_id` in the `customers` collection) and `secret` (must match the value set in the backend). Returns the details of a movie that's similar to one the customer watched recently and enjoyed.
+- `POST find-by-plot`. Provide query parameter for `secret` (must match the value set in the backend). Body contains the plot description:
+
+```json
+{
+  "plot": "A young farm boy discovers he has special powers and joins a rebellion to fight an evil empire in space."
+}
+```
+
+Returns the top matching movie and all matches (up to 10), reranked using Voyage AI's reranking model for improved accuracy. Response includes `topMatch` (best match), `allMatches` (array of all matches with `rerankScore` and `rerankPosition`), and the original `query`.
 
 ## Prerequisites
 - A MongoDB Atlas cluster [you can spin up a free MongoDB Atlas cluster following these instructions](https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/)

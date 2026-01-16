@@ -10,6 +10,7 @@ import getVoyageClient from './helpers/voyageai.js';
 import getMovie from './endpoints/getMovie.js';
 import postViewing from './endpoints/postViewing.js';
 import getRecommendation from './endpoints/getRecommendation.js';
+import findMovieByPlot from './endpoints/findMovieByPlot.js';
 
 const app = express();
 const ip = config.localDev ? config.devIP : config.productionIP;
@@ -78,6 +79,7 @@ app.use(cors(corsOptions));
 app.get('/movie', getMovie);
 app.post('/viewing', postViewing);
 app.get('/recommendation', getRecommendation);
+app.post('/find-by-plot', findMovieByPlot);
 
 app.get('/', (request, response) => {
   const status = {
