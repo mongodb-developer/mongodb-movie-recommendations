@@ -55,7 +55,8 @@ async function postViewing(req, res) {
       { 
         // Add the new viewing to the start of the array, keeping only the most recent 50
         $push: { viewedMovies: { $each: [viewingRecord], $position: 0, $slice: 50 } }
-      }
+      },
+      { upsert: true } // Makes testing easier by creating customer if it doesn't exist
     );
   } catch (error) {
     console.error('Error adding viewing:', error);
