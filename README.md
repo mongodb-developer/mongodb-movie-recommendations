@@ -1,8 +1,10 @@
 # MongoDB Movie Recommendation Engine
 The purpose of the code in this repo is to demonstrate how to build a recommendation engine using Voyage AI and MongoDB Atlas.
 
+This repository includes both a backend API (Node.js/Express) and a frontend web application (React) for searching movies and getting personalized recommendations.
+
 ## Endpoints
-The application provides these 4 endpoints (no front-end code is included, but there's a Postman collection that can be used for testing):
+The application provides these 4 endpoints:
 - `GET movie`. Provide query parameters for `id` (`_id` of the document in the `movies` collection) and for `secret` (must match the value set in the backend). Returns the movie details.
 - `POST viewing`. Provide query parameter for `secret` (must match the value set in the backend). Body contains details of the viewing being added:
 
@@ -152,6 +154,30 @@ The application expects three environment variables to be set:
 npm install
 npm start
 ```
+
+## Frontend Web Application
+
+A React single-page application is included in the `frontend/` directory that provides a user-friendly interface for:
+- **Searching movies by plot description** - Enter a plot and find matching movies using AI-powered vector search
+- **Getting personalized recommendations** - Receive movie suggestions based on viewing history
+- **Recording viewings** - Track watched movies with completion status and ratings (like/neutral/dislike)
+
+### Running the Frontend
+
+1. Ensure the backend server is running on `http://localhost:3000`
+2. In a new terminal, navigate to the frontend directory and start the development server:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend will be available at `http://localhost:5173`
+
+**Note**: Update the `API_SECRET` in `frontend/src/App.jsx` to match your backend secret.
+
+For more details, see [frontend/README.md](frontend/README.md).
 
 ## Testing the endpoints
 [Postman/Movies-local.postman_collection.json](Postman/Movies-local.postman_collection.json) contains a [Postman](https://www.postman.com/) collection that can be imported into Postman to test each of the endpoints.
