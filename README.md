@@ -162,6 +162,8 @@ A React single-page application is included in the `frontend/` directory that pr
 - **Getting personalized recommendations** - Receive movie suggestions based on viewing history
 - **Recording viewings** - Track watched movies with completion status and ratings (like/neutral/dislike)
 
+![Movie recommendations web app. Shows that "Battle of The Planet of the Apes" is being recommended because "Dawn of the Planet of the Apes" is the customer's favourite move](public/images/frontend-app.png)
+
 ### Running the Frontend
 
 1. Ensure the backend server is running on `http://localhost:3000`
