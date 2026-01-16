@@ -165,7 +165,15 @@ A React single-page application is included in the `frontend/` directory that pr
 ### Running the Frontend
 
 1. Ensure the backend server is running on `http://localhost:3000`
-2. In a new terminal, navigate to the frontend directory and start the development server:
+2. Create a `.env` file in the `frontend/` directory:
+
+```bash
+VITE_SECRET=secret123
+```
+
+(Replace `secret123` with your backend secret)
+
+3. In a new terminal, navigate to the frontend directory and start the development server:
 
 ```bash
 cd frontend
@@ -174,8 +182,6 @@ npm run dev
 ```
 
 The frontend will be available at `http://localhost:5173`
-
-**Note**: Update the `API_SECRET` in `frontend/src/App.jsx` to match your backend secret.
 
 For more details, see [frontend/README.md](frontend/README.md).
 

@@ -4,7 +4,7 @@ import Recommendation from './components/Recommendation';
 import ViewingRecorder from './components/ViewingRecorder';
 import './App.css';
 
-const API_SECRET = 'secret123'; // Update this to match your backend secret
+const API_SECRET = import.meta.env.VITE_SECRET || 'secret123';
 
 function App() {
   const [customerId, setCustomerId] = useState('customer1');

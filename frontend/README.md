@@ -22,11 +22,15 @@ npm install
 
 ## Configuration
 
-Update the `API_SECRET` in `src/App.jsx` to match your backend secret:
+Create a `.env` file in the `frontend` directory with your API secret:
 
-```javascript
-const API_SECRET = 'secret123'; // Update this to match your backend secret
+```bash
+VITE_SECRET=secret123
 ```
+
+Replace `secret123` with the same secret you configured in your backend.
+
+**Note**: The secret defaults to `secret123` if not set, but it's recommended to use environment variables for production.
 
 ## Running the Application
 
